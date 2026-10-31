@@ -6,11 +6,11 @@
 
 Supports Arabic, French and English. Developed independently for the Thirduni project hackathon (October 2026).
 
-| Status | Current analysis, OCR and evaluation foundations are implemented. Adaptive selection and the web interface remain under development. |
+> **Project status:** Image-quality analysis, OCR integration, synthetic dataset generation and evaluation foundations are implemented. Adaptive selection and the interactive web interface remain under development.
 
 ---
 
-## The problem
+## The Problem
 
 OCR engines such as Tesseract can recognize clean scans accurately, but photographs of forms, receipts and certificates often contain blur, rotation, shadows or low contrast. These defects can cause recognition errors.
 
@@ -20,34 +20,37 @@ OCR Doctor investigates a more selective approach: analyze the image first, iden
 
 The objective is not to apply more transformations, but to apply the right transformations and measure their actual impact.
 
-## How it works
+## How It Works
+
+The following diagram presents the proposed end-to-end OCR Doctor architecture.
 
 ![OCR Doctor Pipeline](docs/ocr_doctor_pipeline_flowchart.png)
 
-1. **Validate:** Check the uploaded image before processing.
+1. **Validate (planned):** Check the uploaded image before processing.
 2. **Analyze:** Measure blur (variance of the Laplacian), skew (line-angle estimation), contrast (grayscale standard deviation) and lighting (large-scale illumination estimation). These measurements form a quality profile.
 3. **Select (planned):** Use the quality profile to determine appropriate preprocessing operations through rule-based or learned selection strategies.
-4. **Preprocess:** Apply selected image-enhancement operations.
+4. **Preprocess (in progress):** Apply selected image-enhancement operations.
 5. **Recognize:** Extract text using Tesseract OCR.
 6. **Evaluate:** Compare extracted text against ground truth using Character Error Rate (CER) and Word Error Rate (WER), while recording processing time.
 
-The central research question:
+**The central research question:**
 
 *Can quality-aware preprocessing outperform fixed preprocessing strategies, and does the improvement hold across different languages and degradation types?*
 
 A negative result is also a valid research result.
 
-## Status
+## Project Status
 
 | Component | Current state |
 |---|---|
-| CER and WER metrics with unit tests | <badge color="success">Implemented</badge> |
-| Tesseract adapter (Arabic, French, English, word confidences and timing) | <badge color="success">Implemented</badge> |
-| Quality analyzer (blur, skew, contrast and lighting) | <badge color="success">Implemented</badge> |
-| Synthetic multilingual dataset | <badge color="success">Generated</badge> |
-| Deskewing | <badge color="success">Implemented</badge> |
-| CLAHE contrast enhancement | <badge color="success">Implemented</badge> |
+| CER and WER metrics with unit tests | Implemented |
+| Tesseract adapter (Arabic, French, English, word confidences and timing) | Implemented |
+| Quality analyzer (blur, skew, contrast and lighting) | Implemented |
+| Synthetic multilingual dataset | Generated |
+| Deskewing | Implemented |
+| CLAHE contrast enhancement | Implemented |
 | Adaptive thresholding, denoising and lighting correction | Planned |
+| Image validation | Planned |
 | Rule-based preprocessing selector | Planned |
 | Learned selector (Decision Tree, Random Forest) | Planned |
 | Complete experimental comparison | Planned |
@@ -70,7 +73,7 @@ The following table defines the planned main experiment. Results will be populat
 
 The oracle represents the best candidate strategy according to ground-truth evaluation for an individual image. It is an experimental reference, not a deployable model.
 
-### Preliminary sanity checks
+### Preliminary Sanity Checks
 
 The following observations come from individual controlled examples. They are not representative benchmark results.
 
@@ -81,21 +84,21 @@ The following observations come from individual controlled examples. They are no
 
 These experiments verify initial component behavior. Broader evaluation across the multilingual dataset is still required.
 
-## Quick start
+## Quick Start
 
 ### Requirements
 
 - Git
 - Docker Desktop or Docker Engine
 
-### Clone the repository
+### Clone the Repository
 
 ```bash
 git clone https://github.com/FairouzCHB/OCR_Doctor.git
 cd OCR_Doctor
 ```
 
-### Build the Docker image
+### Build the Docker Image
 
 ```bash
 docker build -t ocr-doctor .
@@ -103,7 +106,7 @@ docker build -t ocr-doctor .
 
 The Docker image installs Python dependencies, Tesseract with Arabic, English and French language data, and Noto fonts. It also creates a dedicated non-root application user.
 
-### Verify installed OCR languages
+### Verify Installed OCR Languages
 
 ```bash
 docker run --rm ocr-doctor tesseract --list-langs
@@ -118,26 +121,48 @@ fra
 osd
 ```
 
-### Run automated tests
+### Run Automated Tests
 
 ```bash
 docker run --rm ocr-doctor python -m pytest
 ```
 
-### Check code quality
+### Check Code Quality
 
 ```bash
 docker run --rm ocr-doctor ruff check .
 docker run --rm ocr-doctor ruff format --check .
 ```
 
-### Run an example experiment
+### Run an Example Experiment
 
 ```bash
 docker run --rm ocr-doctor python experiments/test_deskew.py
 ```
 
 The available experiment scripts can be found in the `experiments/` directory.
+
+### Start an Interactive Development Container
+
+The Docker image is configured as a persistent development environment.
+
+```bash
+docker run -d --name ocr-doctor ocr-doctor
+docker exec -it ocr-doctor bash
+```
+
+To stop the container:
+
+```bash
+docker stop ocr-doctor
+```
+
+To restart it later:
+
+```bash
+docker start ocr-doctor
+docker exec -it ocr-doctor bash
+```
 
 **Note:** The current Docker configuration provides a development and experiment environment. A finished interactive CLI and hosted web interface are not yet available.
 
@@ -158,35 +183,50 @@ Synthetic data provides known degradation conditions and exact source text, maki
 
 Real-world document photographs will be added in a later development stage.
 
-## Project structure
+## Project Structure
 
 ```text
-ocr_doctor/
-  domain/          Shared data models and result structures
-  analysis/        Image-quality indicators
-  preprocessing/   Image enhancement operations
-  ocr/             OCR engine interface and Tesseract adapter
-  evaluation/      CER, WER and evaluation utilities
-  dataset/         Synthetic dataset generation
-  selection/       Planned rule-based and learned selectors
-
-experiments/       Experimental scripts
-tests/             Automated tests
-scripts/           Project utilities
-data/              Generated images, source texts and dataset splits
+OCR_Doctor/
+│
+├── ocr_doctor/
+│   ├── analysis/          Image-quality indicators
+│   ├── dataset/           Synthetic dataset generation
+│   ├── domain/            Shared data models
+│   ├── evaluation/        CER, WER and evaluation utilities
+│   ├── ocr/               OCR interface and Tesseract adapter
+│   └── preprocessing/
+│       ├── base.py
+│       └── steps/         Deskewing and contrast enhancement
+│
+├── experiments/           Experimental scripts and tests
+│   └── results/           Experiment notes and results
+│
+├── scripts/               Project utilities
+├── docs/                  Documentation and pipeline diagrams
+├── results/               Consolidated experimental results
+├── tests/                 Automated tests
+├── data/                  Generated images and dataset splits
+│
+├── Dockerfile
+├── requirements.txt
+└── README.md
 ```
 
-The architecture is intended to evolve as the adaptive selection and complete processing pipeline are implemented.
+The architecture is intended to evolve as adaptive selection and the complete processing pipeline are implemented.
 
-### Design principles
+### Design Principles
 
-- **Strategy pattern:** Supports interchangeable preprocessing operations and future selection strategies.
-- **Adapter pattern:** Separates OCR engine implementation from the rest of the system.
-- **Registry and factory:** Intended for consistent registration and creation of preprocessing operations.
-- **Dependency injection:** Supports independent components and easier testing.
+The project follows several software design principles:
+
+- **Adapter pattern:** Separates the Tesseract implementation from the rest of the system.
+- **Abstraction:** Provides a common interface for preprocessing operations.
+- **Modularity:** Keeps image analysis, preprocessing, OCR and evaluation as separate components.
+- **Testability:** Supports independent testing of individual components.
 - **Immutable data models:** Helps maintain consistent quality profiles and experiment results.
 
-## AI research direction
+A registry, factory and dependency-injection architecture may be introduced as the pipeline grows.
+
+## AI Research Direction
 
 OCR Doctor investigates two complementary AI directions.
 
@@ -198,12 +238,14 @@ The system will use image-quality indicators such as blur, skew, contrast and li
 
 Two approaches will be investigated:
 
-**Rule-based selection**
+**Rule-Based Selection**
+
 - Use thresholds derived from training-data analysis.
 - Select operations according to detected image defects.
 - Provide explanations for selection decisions.
 
-**Learned selection**
+**Learned Selection**
+
 - Investigate Decision Tree and Random Forest models.
 - Use image-quality measurements as input features.
 - Predict suitable preprocessing strategies.
@@ -228,9 +270,10 @@ Any future integration would require explicit consent before external document p
 
 Neither the adaptive ML selectors nor the LLM features should be considered completed functionality at this stage.
 
-## Tech stack and AI tools
+## Tech Stack and AI Tools
 
 **Languages and libraries**
+
 - Python 3.12
 - OpenCV
 - Pillow
@@ -239,15 +282,18 @@ Neither the adaptive ML selectors nor the LLM features should be considered comp
 - Ruff
 
 **OCR**
+
 - Tesseract OCR
 - Arabic, English and French language data
 
 **Development environment**
+
 - Docker
 - Git
 - GitHub
 
 **Planned technologies**
+
 - scikit-learn
 - Streamlit
 - Pydantic
@@ -265,7 +311,7 @@ ChatGPT and Claude were used for planning, technical explanations, code assistan
 - **Computational cost:** Adaptive processing introduces analysis overhead. Accuracy improvements must therefore be evaluated alongside latency.
 - **Experimental scope:** Preliminary component tests do not establish that adaptive preprocessing improves overall OCR performance.
 
-## What happens next
+## What Happens Next
 
 Over the next three months, the development priorities are:
 
@@ -300,11 +346,11 @@ Sole developer responsible for the project concept, research direction, technica
 4. Eutamene, A., Kholladi, M. K., Gaceb, D., & Belhadef, H. (2017). *A Dual PSO-Adaptive Mean Shift for Preprocessing Optimization on Degraded Document Images.* International Journal of Applied Metaheuristic Computing, 8(1), 61–76.  
    https://doi.org/10.4018/IJAMC.2017010104
 
-### Technical documentation
+### Technical Documentation
 
 - Tesseract OCR: https://tesseract-ocr.github.io/
 - OpenCV: https://docs.opencv.org/
-- Scikit-learn: https://scikit-learn.org/stable/
+- scikit-learn: https://scikit-learn.org/stable/
 - Pillow: https://pillow.readthedocs.io/
 - pytest: https://docs.pytest.org/
 
