@@ -22,7 +22,7 @@ The objective is not to apply more transformations, but to apply the right trans
 
 ## How it works
 
-[View the OCR Doctor pipeline](https://github.com/FairouzCHB/OCR_Doctor/blob/main/docs/pipeline.png)
+![OCR Doctor Pipeline](docs/ocr_doctor_pipeline_flowchart.png)
 
 1. **Validate:** Check the uploaded image before processing.
 2. **Analyze:** Measure blur (variance of the Laplacian), skew (line-angle estimation), contrast (grayscale standard deviation) and lighting (large-scale illumination estimation). These measurements form a quality profile.
