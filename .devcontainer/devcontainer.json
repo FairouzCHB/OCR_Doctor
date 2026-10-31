@@ -1,0 +1,17 @@
+
+{
+    "name": "OCR Doctor Development",
+    "build": {
+        "context": "..",
+        "dockerfile": "../Dockerfile"
+    },
+    "remoteUser": "app",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "charliermarsh.ruff"
+            ]
+        }
+    }
+}
