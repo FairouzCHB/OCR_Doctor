@@ -1,143 +1,313 @@
 # OCR Doctor
 
-**Diagnoses blurry, tilted or poorly lit document photos, fixes only what is wrong, and measures how much the text recognition improves.**
+### Intelligent, Quality-Aware Multilingual OCR
 
-Works on Arabic, French and English. Built by one person for the Thirduni team project hackathon (October 2026).
+**Analyzes blurry, tilted or poorly lit document photos, explores how to correct their defects selectively, and measures whether text recognition improves.**
 
-| Status | Working analysis, OCR and evaluation core. Adaptive selection and web interface: see [Status](#status) |
+Supports Arabic, French and English. Developed independently for the Thirduni project hackathon (October 2026).
+
+| Status | Current analysis, OCR and evaluation foundations are implemented. Adaptive selection and the web interface remain under development. |
 
 ---
 
 ## The problem
 
-OCR engines such as Tesseract read clean scans well, but phone photos of forms, receipts and certificates are often tilted, blurry, shadowed or low in contrast, and the text comes out wrong. The usual fix is to apply the same preprocessing steps to every image. That can backfire: thresholding can erase thin strokes, and denoising can remove French accents or the dots on Arabic letters.
+OCR engines such as Tesseract can recognize clean scans accurately, but photographs of forms, receipts and certificates often contain blur, rotation, shadows or low contrast. These defects can cause recognition errors.
 
-OCR Doctor works like a doctor instead of applying the same medicine to everyone: it examines the image first, treats only what is wrong, and then proves with numbers whether the treatment helped.
+A common approach is to apply the same preprocessing operations to every image. However, this can sometimes make recognition worse: aggressive thresholding may erase thin character strokes, while denoising may remove French accents or the dots and fine details of Arabic letters.
+
+OCR Doctor investigates a more selective approach: analyze the image first, identify its potential defects, and determine which corrections are appropriate before running OCR.
+
+The objective is not to apply more transformations, but to apply the right transformations and measure their actual impact.
 
 ## How it works
 
-![OCR Doctor pipeline](docs/pipeline.png)
+[View the OCR Doctor pipeline](https://github.com/FairouzCHB/OCR_Doctor/blob/main/docs/pipeline.png)
 
-1. **Validate** the uploaded image.
-2. **Analyze** its quality: blur (variance of the Laplacian), skew (line-angle estimation), contrast (grayscale standard deviation) and lighting (large-scale illumination estimate). The result is a quality profile.
-3. **Select** preprocessing steps from the profile, with a rule-based selector and a learned one (Decision Tree or Random Forest) that share one interface.
-4. **Preprocess**, then **recognize** the text with Tesseract.
-5. **Evaluate** against ground truth with Character Error Rate (CER) and Word Error Rate (WER), and record processing time.
+1. **Validate:** Check the uploaded image before processing.
+2. **Analyze:** Measure blur (variance of the Laplacian), skew (line-angle estimation), contrast (grayscale standard deviation) and lighting (large-scale illumination estimation). These measurements form a quality profile.
+3. **Select (planned):** Use the quality profile to determine appropriate preprocessing operations through rule-based or learned selection strategies.
+4. **Preprocess:** Apply selected image-enhancement operations.
+5. **Recognize:** Extract text using Tesseract OCR.
+6. **Evaluate:** Compare extracted text against ground truth using Character Error Rate (CER) and Word Error Rate (WER), while recording processing time.
 
-The research question: *does quality-aware preprocessing beat a fixed preprocessing pipeline, and does it hold across languages and degradation types?* A negative result is reported as a result.
+The central research question:
+
+*Can quality-aware preprocessing outperform fixed preprocessing strategies, and does the improvement hold across different languages and degradation types?*
+
+A negative result is also a valid research result.
 
 ## Status
 
-| Component | State |
+| Component | Current state |
 |---|---|
-| Metrics (CER, WER) with unit tests | Done |
-| Tesseract adapter (Arabic, French, English, word confidences, timing) | Done |
-| Quality analyzer (blur, skew, contrast, lighting) | Done, checked on controlled degradations |
-| Synthetic multilingual dataset | Done (see [Dataset](#dataset)) |
-| Preprocessing: deskew, CLAHE | Done, early experiments |
-| Other preprocessing steps (thresholding, denoising, lighting correction) | `TODO: update` |
-| Rule-based selector | `TODO: update` |
-| Learned selector (Decision Tree, Random Forest) | `TODO: update` |
-| Streamlit web interface | `TODO: update` |
-| Evaluation on real phone photos | `TODO: update` |
+| CER and WER metrics with unit tests | <badge color="success">Implemented</badge> |
+| Tesseract adapter (Arabic, French, English, word confidences and timing) | <badge color="success">Implemented</badge> |
+| Quality analyzer (blur, skew, contrast and lighting) | <badge color="success">Implemented</badge> |
+| Synthetic multilingual dataset | <badge color="success">Generated</badge> |
+| Deskewing | <badge color="success">Implemented</badge> |
+| CLAHE contrast enhancement | <badge color="success">Implemented</badge> |
+| Adaptive thresholding, denoising and lighting correction | Planned |
+| Rule-based preprocessing selector | Planned |
+| Learned selector (Decision Tree, Random Forest) | Planned |
+| Complete experimental comparison | Planned |
+| Streamlit web interface | Planned |
+| Evaluation on real phone photographs | Planned |
+
+The current prototype establishes the analysis, OCR, dataset and evaluation foundations. The complete adaptive selection pipeline is the next major development objective.
 
 ## Results
 
-Reported on the held-out **test split**, which was not used to tune thresholds or train the selector.
+The following table defines the planned main experiment. Results will be populated after the preprocessing pipeline, selectors and experimental evaluation have been implemented and validated.
 
 | Method | CER | WER | Time per image |
 |---|---|---|---|
-| A. Raw OCR | `TBD` | `TBD` | `TBD` |
-| B. Fixed preprocessing | `TBD` | `TBD` | `TBD` |
-| C. Rule-based adaptive | `TBD` | `TBD` | `TBD` |
-| D. Learned adaptive | `TBD` | `TBD` | `TBD` |
-| E. Oracle (best strategy per image, upper bound only) | `TBD` | `TBD` | n/a |
+| A. Raw OCR | TBD | TBD | TBD |
+| B. Fixed preprocessing | TBD | TBD | TBD |
+| C. Rule-based adaptive | TBD | TBD | TBD |
+| D. Learned adaptive | TBD | TBD | TBD |
+| E. Oracle (experimental upper bound) | TBD | TBD | N/A |
 
-Preliminary sanity checks so far (single controlled examples, not a benchmark):
+The oracle represents the best candidate strategy according to ground-truth evaluation for an individual image. It is an experimental reference, not a deployable model.
 
-- Variance of the Laplacian falls as blur increases.
-- A synthetic 5° rotation is measured at about -5°, and after deskewing the estimate drops to about 0°.
-- Grayscale standard deviation falls as contrast is reduced.
-- One clean English sample: CER 0.56%, WER 3.16%. Tesseract is already near-perfect on clean images, so gains can only appear on degraded ones.
+### Preliminary sanity checks
+
+The following observations come from individual controlled examples. They are not representative benchmark results.
+
+- **Blur:** Variance of the Laplacian decreases as stronger blur is introduced.
+- **Skew:** A synthetic 5° rotation was measured at approximately -5°. After deskewing, the estimated angle returned to approximately 0°.
+- **Contrast:** Grayscale standard deviation decreases as image contrast is reduced.
+- **OCR:** One clean English sample produced a CER of 0.56% and a WER of 3.16%.
+
+These experiments verify initial component behavior. Broader evaluation across the multilingual dataset is still required.
 
 ## Quick start
 
-Requirements: Git and Docker.
+### Requirements
+
+- Git
+- Docker Desktop or Docker Engine
+
+### Clone the repository
 
 ```bash
 git clone https://github.com/FairouzCHB/OCR_Doctor.git
 cd OCR_Doctor
+```
+
+### Build the Docker image
+
+```bash
 docker build -t ocr-doctor .
 ```
 
-The image installs Python dependencies, Tesseract with Arabic, English and French data, and Noto fonts, and runs as a non-root user.
+The Docker image installs Python dependencies, Tesseract with Arabic, English and French language data, and Noto fonts. It also creates a dedicated non-root application user.
+
+### Verify installed OCR languages
 
 ```bash
-docker run --rm ocr-doctor tesseract --list-langs     # expect: ara, eng, fra, osd
-docker run --rm ocr-doctor python -m pytest           # automated tests
-docker run --rm ocr-doctor ruff check .               # code quality
-docker run --rm ocr-doctor python experiments/test_deskew.py   # example experiment
+docker run --rm ocr-doctor tesseract --list-langs
 ```
 
-`TODO: add the commands that generate the dataset and run the main experiment once they exist.`
+Expected language data includes:
+
+```text
+ara
+eng
+fra
+osd
+```
+
+### Run automated tests
+
+```bash
+docker run --rm ocr-doctor python -m pytest
+```
+
+### Check code quality
+
+```bash
+docker run --rm ocr-doctor ruff check .
+docker run --rm ocr-doctor ruff format --check .
+```
+
+### Run an example experiment
+
+```bash
+docker run --rm ocr-doctor python experiments/test_deskew.py
+```
+
+The available experiment scripts can be found in the `experiments/` directory.
+
+**Note:** The current Docker configuration provides a development and experiment environment. A finished interactive CLI and hosted web interface are not yet available.
 
 ## Dataset
 
-- 30 synthetic source documents: 10 each in Arabic, French and English, including paragraphs, receipt-style text and short lists.
-- 5 conditions per document: clean, mild blur, moderate blur, strong blur, rotated. That gives 150 images (90 train, 30 validation, 30 test).
-- The split is made **by source document**, so variants of the same text never appear in both training and test data.
-- Ground truth is the exact original Unicode text, with Arabic text rendered using shaping.
+The current synthetic dataset contains:
 
-Synthetic data gives exact ground truth and known degradation levels, but it does not capture everything about real photos. See [Limitations](#limitations).
+- **30 source documents:** 10 each in Arabic, French and English.
+- **5 image conditions per document:** clean, mild blur, moderate blur, strong blur and rotation.
+- **150 generated images:** 90 training, 30 validation and 30 testing images.
+- **Ground truth:** Original source text retained for recognition evaluation.
+
+The dataset is split by source document so that generated variants of the same original text do not appear across different dataset splits.
+
+Arabic text is rendered using appropriate shaping support.
+
+Synthetic data provides known degradation conditions and exact source text, making controlled experiments possible. However, it does not reproduce every characteristic of real photographs, such as complex shadows, perspective distortion, paper texture and camera compression.
+
+Real-world document photographs will be added in a later development stage.
 
 ## Project structure
 
-```
+```text
 ocr_doctor/
-  domain/          shared data models (quality profile, OCR result)
-  analysis/        image-quality indicators
-  preprocessing/   image enhancement steps
-  selection/       rule-based and learned selectors
+  domain/          Shared data models and result structures
+  analysis/        Image-quality indicators
+  preprocessing/   Image enhancement operations
   ocr/             OCR engine interface and Tesseract adapter
-  evaluation/      CER, WER, experiment runner
-  security/        upload validation (planned)
-  ai/, feedback/   optional extensions (planned)
-  pipeline.py      orchestration
-app/               Streamlit interface (planned)
-corpus/            source texts and fixed split manifest
-experiments/       experiment scripts
-tests/             pytest suite
+  evaluation/      CER, WER and evaluation utilities
+  dataset/         Synthetic dataset generation
+  selection/       Planned rule-based and learned selectors
+
+experiments/       Experimental scripts
+tests/             Automated tests
+scripts/           Project utilities
+data/              Generated images, source texts and dataset splits
 ```
 
-Design: Strategy pattern for interchangeable steps and selectors, Adapter for the OCR engine, a registry for preprocessing steps, dependency injection for testability, and immutable data models.
+The architecture is intended to evolve as the adaptive selection and complete processing pipeline are implemented.
+
+### Design principles
+
+- **Strategy pattern:** Supports interchangeable preprocessing operations and future selection strategies.
+- **Adapter pattern:** Separates OCR engine implementation from the rest of the system.
+- **Registry and factory:** Intended for consistent registration and creation of preprocessing operations.
+- **Dependency injection:** Supports independent components and easier testing.
+- **Immutable data models:** Helps maintain consistent quality profiles and experiment results.
+
+## AI research direction
+
+OCR Doctor investigates two complementary AI directions.
+
+### 1. Machine Learning for Adaptive Preprocessing
+
+This is the core applied-AI research direction.
+
+The system will use image-quality indicators such as blur, skew, contrast and lighting as features for selecting suitable preprocessing strategies.
+
+Two approaches will be investigated:
+
+**Rule-based selection**
+- Use thresholds derived from training-data analysis.
+- Select operations according to detected image defects.
+- Provide explanations for selection decisions.
+
+**Learned selection**
+- Investigate Decision Tree and Random Forest models.
+- Use image-quality measurements as input features.
+- Predict suitable preprocessing strategies.
+- Compare learned selection against explicit rules.
+
+The objective is to determine whether machine learning provides measurable improvements over fixed and rule-based preprocessing.
+
+### 2. Optional LLM-Assisted Document Understanding
+
+A future extension is to investigate Large Language Models (LLMs) after OCR extraction.
+
+Potential capabilities include:
+
+- Extracting tables into structured, editable data.
+- Generating summaries of document contents.
+- Organizing extracted information into structured JSON.
+- Supporting further document analysis.
+
+This component would complement the OCR engine, not replace it.
+
+Any future integration would require explicit consent before external document processing, structured output validation, prompt-injection safeguards and request limits.
+
+Neither the adaptive ML selectors nor the LLM features should be considered completed functionality at this stage.
 
 ## Tech stack and AI tools
 
-- **Languages and libraries:** Python 3.12, OpenCV, Pillow, NumPy, pytest, Ruff.
-- **OCR:** Tesseract (Arabic, English, French).
-- **Environment:** Docker, Git, GitHub.
-- **Planned:** scikit-learn, Streamlit, Pydantic.
-- **AI tools used during development:** ChatGPT and Claude, used for planning, explanations, code assistance and drafting documentation. The author ran and tested the code.
+**Languages and libraries**
+- Python 3.12
+- OpenCV
+- Pillow
+- NumPy
+- pytest
+- Ruff
+
+**OCR**
+- Tesseract OCR
+- Arabic, English and French language data
+
+**Development environment**
+- Docker
+- Git
+- GitHub
+
+**Planned technologies**
+- scikit-learn
+- Streamlit
+- Pydantic
+
+**AI tools used during development**
+
+ChatGPT and Claude were used for planning, technical explanations, code assistance and documentation drafting. The author is responsible for reviewing, implementing, running and testing the project.
 
 ## Limitations
 
-- Most data is synthetic. Real photos have shadows, perspective, paper texture and compression that the generator does not reproduce.
-- Quality scores are heuristics, not perfect measures of how hard an image is to read.
-- Arabic OCR is generally weaker than French or English. Results are reported per language and are not generalized across them.
-- Some preprocessing steps help one image and harm another. That is the reason for selecting steps per image.
-- An adaptive pipeline adds analysis time, so accuracy gains are reported next to latency.
+- **Synthetic-to-real-world gap:** Most current data is synthetic. Real photographs introduce shadows, perspective distortion, paper texture and compression artefacts.
+- **Quality indicators:** Current scores are heuristic measurements, not perfect representations of human readability.
+- **Language differences:** Arabic, French and English have different script and recognition characteristics. Results must be evaluated separately rather than generalized across languages.
+- **Preprocessing trade-offs:** A transformation that improves one image may damage another.
+- **Computational cost:** Adaptive processing introduces analysis overhead. Accuracy improvements must therefore be evaluated alongside latency.
+- **Experimental scope:** Preliminary component tests do not establish that adaptive preprocessing improves overall OCR performance.
 
 ## What happens next
 
-In the next three months: add real phone photos for all three languages, perspective correction and page detection, and a retake-advice feature ("tilted 6°, uneven light: photograph near a window"). Then ship a hosted interface with opt-in feedback so consented usage data can retrain the selector offline. Optional later work is an API that other document tools can call, and LLM-based table extraction and summaries with validated output and explicit consent.
+Over the next three months, the development priorities are:
+
+1. Complete the preprocessing pipeline with thresholding, denoising and additional image-enhancement operations.
+2. Develop an explainable rule-based selector.
+3. Establish controlled comparisons against raw OCR and fixed preprocessing.
+4. Investigate Decision Tree and Random Forest models for learned selection.
+5. Expand the dataset with real document photographs in all three languages.
+6. Evaluate performance using CER, WER and processing latency.
+7. Develop a Streamlit interface for interactive document processing.
+8. Investigate perspective correction, page detection and retake recommendations.
+
+An optional future direction is LLM-assisted table extraction and document summarization, with validated outputs and explicit user consent.
 
 ## Author
 
-**Fairouz Cheikh Bassa**, sole developer: design, implementation, experiments and documentation.
+**Fairouz Cheikh Bassa**
+
+Sole developer responsible for the project concept, research direction, technical architecture, implementation, experiments, evaluation and documentation.
 
 ## References
 
-- Smith, R. (2007). *An Overview of the Tesseract OCR Engine.* ICDAR 2007. https://doi.org/10.1109/ICDAR.2007.4376991
-- Sauvola, J., & Pietikäinen, M. (2000). *Adaptive document image binarization.* Pattern Recognition, 33(2), 225-236. https://doi.org/10.1016/S0031-3203(99)00055-2
+1. Smith, R. (2007). *An Overview of the Tesseract OCR Engine.* ICDAR 2007, pp. 629–633.  
+   https://doi.org/10.1109/ICDAR.2007.4376991
 
-Extended project document: `docs/PROJECT.md`.
+2. Sauvola, J., & Pietikäinen, M. (2000). *Adaptive document image binarization.* Pattern Recognition, 33(2), 225–236.  
+   https://doi.org/10.1016/S0031-3203(99)00055-2
+
+3. Alaei, A., Bui, V., Doermann, D., & Pal, U. (2024). *Document Image Quality Assessment: A Survey.* ACM Computing Surveys, 56(2), Article 29.  
+   https://doi.org/10.1145/3606692
+
+4. Eutamene, A., Kholladi, M. K., Gaceb, D., & Belhadef, H. (2017). *A Dual PSO-Adaptive Mean Shift for Preprocessing Optimization on Degraded Document Images.* International Journal of Applied Metaheuristic Computing, 8(1), 61–76.  
+   https://doi.org/10.4018/IJAMC.2017010104
+
+### Technical documentation
+
+- Tesseract OCR: https://tesseract-ocr.github.io/
+- OpenCV: https://docs.opencv.org/
+- Scikit-learn: https://scikit-learn.org/stable/
+- Pillow: https://pillow.readthedocs.io/
+- pytest: https://docs.pytest.org/
+
+---
+
+*OCR Doctor — Towards intelligent, adaptive and quality-aware document understanding.*
