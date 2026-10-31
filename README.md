@@ -4,10 +4,6 @@
 
 Works on Arabic, French and English. Built by one person for the Thirduni team project hackathon (October 2026).
 
-| | |
-|---|---|
-| Live demo | `TODO: add link` (if no deployment, write why here) |
-| Demo video | `TODO: add unlisted YouTube or Drive link` |
 | Status | Working analysis, OCR and evaluation core. Adaptive selection and web interface: see [Status](#status) |
 
 ---
